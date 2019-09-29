@@ -1,6 +1,7 @@
 <?php
 /* Modified by Madhu Avasarala 09/29/2013
 * ver 1.0 add Moodle and WP compatibility and get settings appropriately
+*         all data returned as objects instead of arrays in json_decode
 */
 // if directly called die. Use standard WP and Moodle practices
 if (!defined( "ABSPATH" ) && !defined( "MOODLE_INTERNAL" ) )
@@ -83,13 +84,13 @@ class CfAutoCollect
         $curlResponse = $this->postCurl($endpoint, $headers);
         if ($curlResponse)
         {
-           if ($curlResponse["status"] == "SUCCESS") {
-             $token = $curlResponse["data"]["token"];
+           if ($curlResponse->status == "SUCCESS")
+           {
+             $token = $curlResponse->data->token;
              return $token;
            } else
            {
-              throw new Exception("Authorization failed. Reason : ". $curlResponse["message"]);
-              return $token;
+              throw new Exception("Authorization failed. Reason : ". $curlResponse->message);
            }
         }
     }
@@ -99,7 +100,7 @@ class CfAutoCollect
     * @param name is the full name of the user as in SriToni
     * @param phone is the user's principal phone number
     * @param email is the SriToni email of user
-    * returns an array with keys "accountNumber" and "ifsc"
+    * returns an object with keys "accountNumber" and "ifsc"
     */
     public function createVirtualAccount ($vAccountId, $name, $phone, $email)
     {
@@ -119,17 +120,50 @@ class CfAutoCollect
             "email: $email"
         ];
         $curlResponse = $this->postCurl($endpoint, $headers, $params);
-        if ($curlResponse["status"] == "SUCCESS")
+        if ($curlResponse->status == "SUCCESS")
         {
-          $response = $curlResponse["data"]; // returns an array
-          return $response;
-        } else
+            return $curlResponse->data; // returns new account object
+        }
+        else
         {
-          return null;
+            if ($this->verbose)
+            {
+                error_log( "This is the error message while creating a new Virtual Account" . $curlResponse->message );
+            }
+            return null;
         }
       }
     }
 
+    /**
+    * returns an object with all vAccounts created so far
+    *
+    */
+    protected function listAllVirtualAccounts()
+    {
+        if ($this->token)
+        {
+            $endpoint = $this->baseUrl."/allVA";
+            $authToken = $this->token;
+            $headers = [
+                        "Authorization: Bearer $authToken"
+                       ];
+            $curlResponse   = $this->getCurl ($endpoint, $headers);
+            if ($curlResponse->status == "SUCCESS")
+            {
+              $vAccounts = $curlResponse->data->vAccounts;
+            }
+            else $vAccounts = NULL;
+          }
+          return $vAccounts;
+
+        }
+    }
+
+    /**
+    *  @param vAccountId is self explanatory, is SriToni ID number limited to 8 chars
+    *  returns all payments made to this account as an object
+    */
     public function getPaymentsForVirtualAccount($vAccountId) {
       if ($this->token) {
         // Validate , sanitize $vAccountId
@@ -139,8 +173,9 @@ class CfAutoCollect
              "Authorization: Bearer $authToken"
               ];
         $curlResponse = $this->getCurl($endpoint, $headers);
-        if ($curlResponse["status"] == "SUCCESS") {
-          $payments = $curlResponse["data"]["payments"];
+        if ($curlResponse->status == "SUCCESS")
+        {
+          $payments = $curlResponse->data->payments;
         }
         else $payments = NULL;
       }
@@ -166,7 +201,7 @@ class CfAutoCollect
       $returnData = curl_exec($ch);
       curl_close($ch);
       if ($returnData != "") {
-        return json_decode($returnData, true);
+        return json_decode($returnData, false);     // returns object not array
       }
       return NULL;
     }
@@ -179,7 +214,7 @@ class CfAutoCollect
        $returnData = curl_exec($ch);
        curl_close($ch);
        if ($returnData != "") {
-        return json_decode($returnData, true);
+        return json_decode($returnData, fasle);     // returns object not array
        }
        return NULL;
     }
