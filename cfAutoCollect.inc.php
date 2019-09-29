@@ -198,6 +198,9 @@ class CfAutoCollect
       curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
       curl_setopt($ch, CURLOPT_TIMEOUT, 10);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
+      curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+
       $returnData = curl_exec($ch);
       curl_close($ch);
       if ($returnData != "") {
@@ -211,6 +214,8 @@ class CfAutoCollect
        curl_setopt($ch, CURLOPT_URL, $endpoint);
        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+       curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1); // verifies the authenticity of the peer's certificate
+       curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // verify the certificate's name against host
        $returnData = curl_exec($ch);
        curl_close($ch);
        if ($returnData != "") {
