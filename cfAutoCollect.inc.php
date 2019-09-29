@@ -23,8 +23,9 @@ class CfAutoCollect
 		{
 			// we are in wordpress environment, don't care about $site_name since get_option is site dependendent
             // ensure key and sercret set correctly no check is made wether set or not
-			$api_key		= $this->getoption("sritoni_settings", "cashfree_key");
-			$api_secret		= $this->getoption("sritoni_settings", "cash_secret");
+            // Make sure these work for Virtual Account API
+			$api_key		= $this->getoption("sritoni_settings", "pg_vas_key");
+			$api_secret		= $this->getoption("sritoni_settings", "pg_vas_secret");
 		}
         if ( defined("MOODLE_INTERNAL") )
 		{
@@ -93,16 +94,16 @@ class CfAutoCollect
               throw new Exception("Authorization failed. Reason : ". $curlResponse->message);
            }
         }
-    }
+    }       // end of function authorizeAndGetToken
 
     /**
-    * @param vAccountId is the sriToni ID number limited to 8 characters
-    * @param name is the full name of the user as in SriToni
+    * @param moodleuserid is the user id as in moodle user table
+    * @param name is the user's sritoni full name
     * @param phone is the user's principal phone number
     * @param email is the SriToni email of user
     * returns an object with keys "accountNumber" and "ifsc"
     */
-    public function createVirtualAccount ($vAccountId, $name, $phone, $email)
+    public function createVirtualAccount ($moodleuserid, $name, $phone, $email)
     {
       $response =["status" => "FAILED", "message" => "Authorization failed"];
       if ($this->token)
@@ -112,6 +113,8 @@ class CfAutoCollect
         $headers    = [
             "Authorization: Bearer $authToken"
             ];
+        // pad moodleuserid with 0's from left for minimum length of 4
+        $vAccountId = str_pad($moodleuserid, 4, "0", STR_PAD_LEFT);
         $params     =
         [
             "vAccountId: $vAccountId",
@@ -133,7 +136,7 @@ class CfAutoCollect
             return null;
         }
       }
-    }
+  }           // end of function createVirtualAccount
 
     /**
     * returns an object with all vAccounts created so far
@@ -157,7 +160,33 @@ class CfAutoCollect
           }
           return $vAccounts;
 
+    }       // end of function listAllVirtualAccounts
+
+    /**
+    *  Get Virtual Account Object given its ID and list of all Virtual Accounts
+    * @param id is the Moodle user table's id
+    * @param vAccounts is object of all virtual accounts
+    */
+    protected function getvAccountGivenId($moodleuserid)
+    {
+        if (!$this->token)
+        {
+            return null;
         }
+        $vA = null;
+        // pad the moodle user id with 0's on left side, if less than 4 digits
+        $vAccountId = str_pad($moodleuserid, 4, "0", STR_PAD_LEFT);
+        $endpoint = $this->baseUrl . "/va/" . $vAccountId;
+        $authToken = $this->token;
+        $headers = [
+                    "Authorization: Bearer $authToken"
+                   ];
+        $curlResponse = $this->getCurl($endpoint, $headers);
+        if ($curlResponse->status == "SUCCESS")
+        {
+          $vA = $curlResponse->data;    // return the account details object
+        }
+        return $vA;
     }
 
     /**
@@ -209,7 +238,8 @@ class CfAutoCollect
       return NULL;
     }
 
-    protected function getCurl ($endpoint, $headers) {
+    protected function getCurl ($endpoint, $headers)
+    {
        $ch = curl_init();
        curl_setopt($ch, CURLOPT_URL, $endpoint);
        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
