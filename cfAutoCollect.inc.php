@@ -3,12 +3,14 @@
 * ver 1.0 add Moodle and WP compatibility and get settings appropriately
 *         all data returned as objects instead of arrays in json_decode
 */
+
 // if directly called die. Use standard WP and Moodle practices
 if (!defined( "ABSPATH" ) && !defined( "MOODLE_INTERNAL" ) )
     {
     	die( 'No script kiddies please!' );
     }
 
+// class definition begins
 class CfAutoCollect
 {
     protected $token;
@@ -19,6 +21,7 @@ class CfAutoCollect
     public function __construct($site_name = null)
     {
         $this->verbose      = self::VERBOSE;
+
         if ( defined("ABSPATH") )
 		{
 			// we are in wordpress environment, don't care about $site_name since get_option is site dependendent
@@ -27,6 +30,7 @@ class CfAutoCollect
 			$api_key		= $this->getoption("sritoni_settings", "pg_vas_key");
 			$api_secret		= $this->getoption("sritoni_settings", "pg_vas_secret");
 		}
+
         if ( defined("MOODLE_INTERNAL") )
 		{
 			// we are in MOODLE environment
@@ -47,6 +51,7 @@ class CfAutoCollect
 			$api_key		= get_config('block_configurable_reports', $key_string);
 			$api_secret		= get_config('block_configurable_reports', $secret_string);
 		}
+        
         // add these as properties of object
         $this->clientId		= $api_key;
 		$this->clientSecret	= $api_secret;
@@ -169,6 +174,12 @@ class CfAutoCollect
     */
     protected function vAExists($vAccountId, $vAccounts)
     {
+        if (sizeof($vAccounts) == 0)
+        {
+            // no entries in the socket_create_listen
+            return false;
+        }
+        // we have at least one entry in the list
         foreach ($vAccounts as $key => $vA)
         {
             if ( $vA->vAccountId == $vAccountId )
@@ -277,5 +288,5 @@ class CfAutoCollect
     {
       $this->token = NULL;
     }
-}
+}       // class definition ends
 ?>
