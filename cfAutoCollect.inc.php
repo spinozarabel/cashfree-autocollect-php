@@ -103,7 +103,7 @@ class CfAutoCollect
     * @param email is the SriToni email of user
     * returns an object with keys "accountNumber" and "ifsc"
     */
-    public function createVirtualAccount ($moodleuserid, $name, $phone, $email)
+    public function createVirtualAccount($moodleuserid, $name, $phone, $email)
     {
       $response =["status" => "FAILED", "message" => "Authorization failed"];
       if ($this->token)
@@ -140,7 +140,7 @@ class CfAutoCollect
 
     /**
     * returns an object with all vAccounts created so far
-    *
+    * The data is an array numerically indexed, of objects
     */
     protected function listAllVirtualAccounts()
     {
@@ -161,6 +161,25 @@ class CfAutoCollect
           return $vAccounts;
 
     }       // end of function listAllVirtualAccounts
+
+    /**
+    * @param vAccountId is the Virtual account ID
+    * @param vAccounts is the array containing list of all vAs
+    * returns the boolean value of vA with this ID exists or not
+    */
+    protected function vAExists($vAccountId, $vAccounts)
+    {
+        foreach ($vAccounts as $key => $vA)
+        {
+            if ( $vA->vAccountId == $vAccountId )
+            {
+                // Virtual Account exists with the given ID
+                return true;
+            }
+        }
+        // we have looped through entire list with no match
+        return false;
+    }
 
     /**
     *  Get Virtual Account Object given its ID and list of all Virtual Accounts
