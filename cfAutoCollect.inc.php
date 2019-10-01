@@ -51,7 +51,7 @@ class CfAutoCollect
 			$api_key		= get_config('block_configurable_reports', $key_string);
 			$api_secret		= get_config('block_configurable_reports', $secret_string);
 		}
-        
+
         // add these as properties of object
         $this->clientId		= $api_key;
 		$this->clientSecret	= $api_secret;
@@ -221,7 +221,7 @@ class CfAutoCollect
 
     /**
     *  @param vAccountId is self explanatory, is SriToni ID number limited to 8 chars
-    *  returns all payments made to this account as an object
+    *  returns all payments made to this account as an array of payment objects
     */
     public function getPaymentsForVirtualAccount($vAccountId) {
       if ($this->token) {
