@@ -27,8 +27,8 @@ class CfAutoCollect
 			// we are in wordpress environment, don't care about $site_name since get_option is site dependendent
             // ensure key and sercret set correctly no check is made wether set or not
             // Make sure these work for Virtual Account API
-			$api_key		= $this->getoption("sritoni_settings", "pg_vas_key");
-			$api_secret		= $this->getoption("sritoni_settings", "pg_vas_secret");
+			$api_key		= $this->getoption("sritoni_settings", "cashfree_key");
+			$api_secret		= $this->getoption("sritoni_settings", "cashfree_secret");
 		}
 
         if ( defined("MOODLE_INTERNAL") )
@@ -36,6 +36,7 @@ class CfAutoCollect
 			// we are in MOODLE environment
 			// based on passed in $site_name change the strings for config select.
             // $site must be passed correctlt for this to work, no check is made
+            // make sure these definitions are same as in configurable_reports plugin settings
 			if (stripos($site_name, 'hset') !== false)
 			{
 				$key_string 	= 'pg_api_key_hset';
