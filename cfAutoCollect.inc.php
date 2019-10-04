@@ -15,6 +15,9 @@ class CfAutoCollect
 {
     protected $token;
     protected $baseUrl;
+    protected $clientId;
+    protected $clientSecret;
+
     const TEST_PRODUCTION  = "TEST";
     const VERBOSE          = true;
 
@@ -56,16 +59,14 @@ class CfAutoCollect
         // add these as properties of object
         $this->clientId		= $api_key;
 		$this->clientSecret	= $api_secret;
-        // these are legay variables so we keep them
-        $clientId           = $api_key;
-        $clientSecret       = $api_secret;
+
         $stage = self::TEST_PRODUCTION;
 
         if ($stage == "PROD")
         {
-          $this->baseUrl = "https://cac-api.gocashfree.com/cac/v1";
+          $this->baseUrl = "https://cac-api.cashfree.com/cac/v1";
         } else {
-          $this->baseUrl = "https://cac-gamma.gocashfree.com/cac/v1";
+          $this->baseUrl = "https://cac-gamma.cashfree.com/cac/v1";
         }
 
         $this->token     = $this->authorizeAndGetToken();
@@ -95,6 +96,7 @@ class CfAutoCollect
            {
              $token = $curlResponse->data->token;
              return $token;
+             error_log($token);
            } else
            {
               throw new Exception("Authorization failed. Reason : ". $curlResponse->message);
@@ -121,14 +123,16 @@ class CfAutoCollect
             ];
         // pad moodleuserid with 0's from left for minimum length of 4
         // $vAccountId = str_pad($moodleuserid, 4, "0", STR_PAD_LEFT);
-        $params     =
-        [
-            "vAccountId: $vAccountId",
-            "name: $name",
-            "phone: $phone",
-            "email: $email"
-        ];
+        $params     = array
+                            (
+                                "vAccountId" => $vAccountId,
+                                "name"       => $name,
+                                "phone"      => $phone,
+                                "email"      => $email,
+                            );
         $curlResponse = $this->postCurl($endpoint, $headers, $params);
+        //error_log("curl response of accountcreate");
+        //error_log(print_r($curlResponse));
         if ($curlResponse->status == "SUCCESS")
         {
             return $curlResponse->data; // returns new account object
@@ -148,7 +152,7 @@ class CfAutoCollect
     * returns an object with all vAccounts created so far
     * The data is an array numerically indexed, of objects
     */
-    protected function listAllVirtualAccounts()
+    function listAllVirtualAccounts()
     {
         if ($this->token)
         {
@@ -173,7 +177,7 @@ class CfAutoCollect
     * @param vAccounts is the array containing list of all vAs
     * returns the boolean value of vA with this ID exists or not
     */
-    protected function vAExists($vAccountId, $vAccounts)
+    function vAExists($vAccountId, $vAccounts)
     {
         if (sizeof($vAccounts) == 0)
         {
@@ -196,9 +200,10 @@ class CfAutoCollect
     /**
     *  Get Virtual Account Object given its ID
     * @param vAccountId is the vAccountId
-    *
+    * returns null if not successfull
+    * returns the fetched virtual account object if successfull
     */
-    protected function getvAccountGivenId($vAccountId)
+    function getvAccountGivenId($vAccountId)
     {
         if (!$this->token)
             {
@@ -213,6 +218,8 @@ class CfAutoCollect
                     "Authorization: Bearer $authToken"
                    ];
         $curlResponse = $this->getCurl($endpoint, $headers);
+        //error_log("curl response of accountcreate");
+        //error_log(print_r($curlResponse));
         if ($curlResponse->status == "SUCCESS")
         {
           $vA = $curlResponse->data;    // return the account details object
@@ -280,7 +287,7 @@ class CfAutoCollect
        $returnData = curl_exec($ch);
        curl_close($ch);
        if ($returnData != "") {
-        return json_decode($returnData, fasle);     // returns object not array
+        return json_decode($returnData, false);     // returns object not array
        }
        return NULL;
     }
